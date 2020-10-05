@@ -9,18 +9,10 @@ variables:
 services:
   - docker:dind
 
-.before_script_template:
-  before_script:
-
-    - export GOPATH=$HOME/go
-    - export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
-    - mkdir -p $HOME/go/src/github.com/uditgaurav1/kind
-    - rsync -az --delete ${CI_PROJECT_DIR}/ ${GOPATH}/src/github.com/uditgaurav1/kind/ #CI_PROJECT_DIR is full path where project is cloned
-    - cd $HOME/go/src/github.com/uditgaurav1/kind
-
 SetupKinD:
   stage: Cluster Setup
-  extends: .before_script_template
+  tags:
+    - k3s
   script:
     - path=$(pwd)
     - apk add -U wget
@@ -36,22 +28,15 @@ SetupKinD:
     - sleep 30
     - kubectl cluster-info --context kind-kind
     - kubectl get nodes
-    - mkdir $path/.kube
-    - cat ~/.kube/config > $path/.kube/config
-
-  artifacts:
-    when: always
-    paths:
-      - .kube/
-      - /usr/local/bin/
 
 DeployApp:
   image: uditgaurav/kind:ci
-  extends: .before_script_template
   stage: App Deploy
+  tags:
+    - k3s  
   script: 
     - ls -a
-    - kind --version
+    - k3s --version
     - kubectl get nodes
   dependencies: 
     - SetupKinD    
